@@ -1,0 +1,101 @@
+{
+  "name": "免费版③｜Webhook 线索收集器",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 免费版③｜Webhook 线索收集器\n**用途**：给你的落地页/表单一个收集接口，POST JSON 即可登记线索并即时返回结果。\n\n**怎么测**\n1. 点「收到请求」节点，进入 Test URL 监听状态\n2. 另开终端执行：\n`curl -X POST http://localhost:5678/webhook-test/flowkit-lead -H \"Content-Type: application/json\" -d \"{\\\"name\\\":\\\"张三\\\",\\\"contact\\\":\\\"wx: zhangsan\\\",\\\"message\\\":\\\"想买模板包\\\"}\"`\n3. 激活工作流后生产地址是 `/webhook/flowkit-lead`\n\n**字段**：name(必填) / contact / message",
+        "width": 440,
+        "height": 480,
+        "color": 4
+      },
+      "id": "fk-0000c91yq1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "flowkit-lead",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "fk-pfditkq4-5ilm",
+      "id": "fk-0000dj201r",
+      "name": "收到请求",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        80,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 校验并登记线索；线索暂存在工作流静态数据（正式使用建议写入飞书多维表格/数据库）\nconst body = $input.first().json.body || $input.first().json;\nconst name = String(body.name || '').trim();\nif (!name) return [{ json: { ok: false, error: '缺少必填字段 name' } }];\nconst store = $getWorkflowStaticData('global');\nstore.leads = store.leads || [];\nconst lead = { name, contact: body.contact || '', message: body.message || '', at: new Date().toISOString() };\nstore.leads.push(lead);\nreturn [{ json: { ok: true, lead, totalLeads: store.leads.length,\n  hint: '生产环境请把线索写入飞书多维表格/邮件通知（Pro 包 06 简历筛选就是完整链路）' } }];"
+      },
+      "id": "fk-0000e9748z",
+      "name": "登记线索",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fk-0000fb1u0m",
+      "name": "结束",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        560,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Sticky Note": {
+      "main": [
+        [
+          {
+            "node": "收到请求",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "收到请求": {
+      "main": [
+        [
+          {
+            "node": "登记线索",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "登记线索": {
+      "main": [
+        [
+          {
+            "node": "结束",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

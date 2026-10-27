@@ -1,0 +1,126 @@
+{
+  "name": "免费版②｜网页变更监控器",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 免费版②｜网页变更监控器\n**用途**：定时抓一个网页，内容有变化时输出 `changed: true`（默认盯 GitHub Trending 页，可换任意页面）。\n\n**怎么用**\n1. 「手动触发」跑一次看输出；正式使用换 Schedule Trigger 并**激活工作流**（激活后哈希才会持续记录）\n2. 改「抓取页面」节点里的 URL 为你要监控的页面（如 36kr 首页 `https://36kr.com`）\n3. `changed` 字段接飞书/钉钉机器人即可推送（Pro 包 05 号就是完整版）\n4. 目标站偶发超时：在节点 Settings 里打开「Retry on Fail」\n\n**原理**：不存全文，只存内容哈希，省空间且无隐私风险。\n**注意**：Self-hosted 默认限制文件/磁盘访问范围，报 \"Access to the file is not allowed\" 时设置环境变量 `N8N_RESTRICT_FILE_ACCESS_TO`（分号分隔多个路径）。",
+        "width": 440,
+        "height": 500,
+        "color": 4
+      },
+      "id": "fk-00007pqxb5",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fk-00008slp5e",
+      "name": "手动触发",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        80,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://github.com/trending",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "fk-000095c4ri",
+      "name": "抓取页面",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 对页面内容做 djb2 哈希，和上次哈希比对（哈希存在工作流静态数据里）\nconst page = $input.first();\nconst body = typeof page.json.data === 'string' ? page.json.data : JSON.stringify(page.json);\nlet h = 5381;\nfor (let i = 0; i < body.length; i++) h = ((h << 5) + h + body.charCodeAt(i)) >>> 0;\nconst hash = h.toString(16);\nconst store = $getWorkflowStaticData('global');\nconst prev = store.lastHash || '';\nstore.lastHash = hash;\nreturn [{ json: {\n  url: page.json.url || '目标页面',\n  hash,\n  previousHash: prev || '首次运行(尚无历史)',\n  changed: prev ? hash !== prev : '激活工作流后开始记录',\n  checkedAt: new Date().toISOString()\n} }];"
+      },
+      "id": "fk-0000am4hgq",
+      "name": "哈希比对",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fk-0000b03vme",
+      "name": "结束",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Sticky Note": {
+      "main": [
+        [
+          {
+            "node": "手动触发",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "手动触发": {
+      "main": [
+        [
+          {
+            "node": "抓取页面",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "抓取页面": {
+      "main": [
+        [
+          {
+            "node": "哈希比对",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "哈希比对": {
+      "main": [
+        [
+          {
+            "node": "结束",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

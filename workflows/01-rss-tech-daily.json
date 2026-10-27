@@ -1,0 +1,146 @@
+{
+  "name": "免费版①｜RSS 技术日报生成器",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## 免费版①｜RSS 技术日报生成器\n**用途**：抓取 Hacker News 首页，取最新 10 条生成一张中文排版的技术日报 HTML。\n\n**怎么用**\n1. 点「手动触发 → Execute workflow」直接跑\n2. 结果写入 n8n 工作目录 `output/daily-digest.html`（可在「写入文件」节点改成绝对路径）\n3. 想定时跑：把「手动触发」换成 Schedule Trigger\n4. 想换信息源：改 RSS 节点的 URL（36kr：`https://36kr.com/feed`）\n\n**升级**：Pro 包 04 号工作流加了 AI 摘要 + 飞书推送。",
+        "width": 420,
+        "height": 460,
+        "color": 4
+      },
+      "id": "fk-00001k2nrg",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fk-00002upcyk",
+      "name": "手动触发",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        80,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://hnrss.org/frontpage?count=30"
+      },
+      "id": "fk-00003641s5",
+      "name": "读取 RSS",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        320,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 取最近 10 条，生成一张中文日报 HTML\nconst items = $input.all().map(i => i.json).filter(x => x.title && x.link)\n  .sort((a, b) => new Date(b.isoDate || 0) - new Date(a.isoDate || 0))\n  .slice(0, 10);\nconst esc = s => String(s).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\nconst rows = items.map((x, i) =>\n  '<tr><td>' + (i + 1) + '</td><td><a href=\"' + esc(x.link) + '\">' + esc(x.title) + '</a></td><td>' + String(x.isoDate || '').slice(0, 10) + '</td></tr>'\n).join('');\nconst html = '<!doctype html><meta charset=\"utf-8\"><h1>技术日报 ' + new Date().toISOString().slice(0, 10) + '</h1><table border=\"1\" cellpadding=\"6\" style=\"border-collapse:collapse\">' + rows + '</table>';\nreturn [{ json: { count: items.length, tip: 'HTML 已写入 output/daily-digest.html' },\n  binary: { data: { data: Buffer.from(html, 'utf8').toString('base64'), mimeType: 'text/html', fileName: 'daily-digest.html' } } }];"
+      },
+      "id": "fk-00004bvwlt",
+      "name": "生成日报HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "output/daily-digest.html",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "fk-00005p7qdt",
+      "name": "写入文件",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "fk-000067wc9e",
+      "name": "结束",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Sticky Note": {
+      "main": [
+        [
+          {
+            "node": "手动触发",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "手动触发": {
+      "main": [
+        [
+          {
+            "node": "读取 RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "读取 RSS": {
+      "main": [
+        [
+          {
+            "node": "生成日报HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "生成日报HTML": {
+      "main": [
+        [
+          {
+            "node": "写入文件",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "写入文件": {
+      "main": [
+        [
+          {
+            "node": "结束",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
