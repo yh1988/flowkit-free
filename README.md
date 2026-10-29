@@ -37,6 +37,19 @@ npx n8n
 
 闲鱼搜索「**n8n 工作流**」可找到完整版；部署嫌麻烦也提供代部署服务。
 
+## 配套项目
+
+- [flowskill](https://github.com/yh1988/flowskill)：FlowSkill 中文实战 Agent Skills 免费版（Claude Code 一条命令安装：n8n 工作流生成师 / 小红书笔记工坊 / 闲鱼卖家助手）——让 AI 助手替你写 n8n 工作流、写小红书笔记、写闲鱼文案。
+
+## 给完整版用户的提示：AI Key 渠道
+
+完整版里的 AI 工作流（总结、智能客服等）需要你自己的 API Key。官方渠道之外，社区里很多人用「API 中转站」按量付费降低成本。以下是两家被多个大型开源项目（如 70k★ 的 ppt-master）选作赞助商的中转服务，供比价参考——**这些是返利链接（aff），你注册我不加价，我拿一点返佣**：
+
+- [APIKEY.FAN](https://apikey.fan/register?aff=haoyard) — Claude/GPT/DeepSeek 等多模型按量中转
+- [RunAPI](https://runapi.host/register?aff=haoyard) — OpenAI 兼容接口中转
+
+> 提示：中转站价格与稳定性随时会变，大额充值前先小额测试；生产/敏感数据场景建议只用官方 API。本仓库与上述服务无隶属关系。
+
 ## 环境要求
 
 - n8n 1.x（社区版即可，本仓库 3 个模板在 n8n 2.x 实测通过）
